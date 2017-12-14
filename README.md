@@ -1,10 +1,10 @@
 # openxc-wheel
 
-Use to control the OpenXC vehicle simulator (http://openxcplatform.com/projects/simulator.html) from a Logitech G27 steering wheel.
+Use to control the OpenXC vehicle simulator (http://openxcplatform.com/projects/simulator.html) from a Logitech G27 steering wheel, or alternatively a G25 (more can be added - see wheel_config.py).
 
 ## Requirements
 
-Written on Python 2.7.2, uses the pygame library to connect to the steering wheel. If you use the pip package manager, simply run 
+Written on Python 3.6.2, uses the pygame library to connect to the steering wheel. If you use the pip package manager, simply run 
 
 *pip install -r pip-requirements.txt*
 
@@ -24,5 +24,5 @@ You also need the OpenXC vehicle simulator, get it from https://github.com/openx
 - Connect the G27 to via USB
 - Run python control.py
 - Press the left-most red button on the gearshift to start the engine
-- Use gas and break pedal and the steering wheel to send events to the emulator
+- Use gas and brake pedal and the steering wheel to send events to the emulator
 
