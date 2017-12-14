@@ -28,11 +28,11 @@ class Wheel:
       openxc-vehicle-simulator expects a percentage value between 0 and 100
       """
       state = (1 - value) * 50
-      if state > 100 - Wheel.config.PEDAL_TOLERANCE:
+      if state > 100 - Wheel.config["PEDAL_TOLERANCE"]:
         state = 100
-      if state < Wheel.config.PEDAL_TOLERANCE:
+      if state < Wheel.config["PEDAL_TOLERANCE"]:
         state = 0
-      if self._state is None or math.fabs(self._state - state) > Wheel.config.PEDAL_TOLERANCE:
+      if self._state is None or math.fabs(self._state - state) > Wheel.config["PEDAL_TOLERANCE"]:
         self._state = state
         self.on_change(self._state)
 
@@ -133,17 +133,8 @@ class Wheel:
         self.on_change(self._angle)
 
 
-  config = wheel_config
-  gears = {
-    0: "neutral",
-    wheel_config.GEAR_1: "first",
-    wheel_config.GEAR_2: "second",
-    wheel_config.GEAR_3: "third",
-    wheel_config.GEAR_4: "fourth",
-    wheel_config.GEAR_5: "fifth",
-    wheel_config.GEAR_6: "sixth",
-    wheel_config.GEAR_REVERSE: "reverse"
-  }
+  config = None
+  gears = {}
 
   def __init__(self):
     """create a new Wheel instance"""
@@ -155,27 +146,49 @@ class Wheel:
     except Exception as ex:
       return None
 
+    wheel_cfg = wheel_config.WheelConfig()
     self.wheel = None
     for j in range(0,pygame.joystick.get_count()):
-      if pygame.joystick.Joystick(j).get_name() == Wheel.config.WHEEL_NAME:
+      if wheel_cfg.find_wheel_name(pygame.joystick.Joystick(j).get_name()):
         self.wheel = pygame.joystick.Joystick(j)
         self.wheel.init()
-        print "Found", self.wheel.get_name()
+        self._wheel_config = wheel_cfg.set_name(self.wheel.get_name())
+        Wheel.config = self._wheel_config
+        Wheel.gears = {
+        0: "neutral",
+        self._wheel_config["GEAR_1"]: "first",
+        self._wheel_config["GEAR_2"]: "second",
+        self._wheel_config["GEAR_3"]: "third",
+        self._wheel_config["GEAR_4"]: "fourth",
+        self._wheel_config["GEAR_5"]: "fifth",
+        self._wheel_config["GEAR_6"]: "sixth",
+        self._wheel_config["GEAR_REVERSE"]: "reverse"
+        }
+        print("Found", self.wheel.get_name())
+        break
 
     if not self.wheel:
-      print "No", Wheel.config.WHEEL_NAME, "found"
-      #raise "No " + Wheel.config.WHEEL_NAME + " found"
+      print("No", pygame.joystick.Joystick(j).get_name(), "found")
+      #raise "No " + self.wheel_config["WHEEL_NAME"] + " found"
+      for j in range(0,pygame.joystick.get_count()):
+        print('Found %s instead' % pygame.joystick.Joystick(j).get_name())
+
+  def wheel_found(self):
+    return self.wheel != None
+
+  def get_wheel_config(self):
+    return self._wheel_config
 
   def is_gear_button(self, button):
     """checks if a button event is actually the gear shift being moved"""
     return button in (
-      Wheel.config.GEAR_1,
-      Wheel.config.GEAR_2,
-      Wheel.config.GEAR_3,
-      Wheel.config.GEAR_4,
-      Wheel.config.GEAR_5,
-      Wheel.config.GEAR_6,
-      Wheel.config.GEAR_REVERSE,
+      self._wheel_config["GEAR_1"],
+      self._wheel_config["GEAR_2"],
+      self._wheel_config["GEAR_3"],
+      self._wheel_config["GEAR_4"],
+      self._wheel_config["GEAR_5"],
+      self._wheel_config["GEAR_6"],
+      self._wheel_config["GEAR_REVERSE"],
     )
 
   def register_pedal(self, axis, handler):
@@ -184,14 +197,14 @@ class Wheel:
     axis -- the number of the G27 axis (0-3)
     handler -- the event handler that is called when the axis is moved more than the tolerance
     """
-    if axis == Wheel.config.ACCELERATOR:
+    if axis == self._wheel_config["ACCELERATOR"]:
       self.accelerator = Wheel.Pedal(handler)
-    elif axis == Wheel.config.BRAKE:
+    elif axis == self._wheel_config["BRAKE"]:
       self.brake = Wheel.Pedal(handler)
-    elif axis == Wheel.config.CLUTCH:
+    elif axis == self._wheel_config["CLUTCH"]:
       self.clutch = Wheel.Pedal(handler)
     else:
-      print "Pedal not configured", axis
+      print("Pedal not configured", axis)
 
   def register_steering_wheel(self, handler):
     """register event handler for the steering wheel
@@ -216,48 +229,48 @@ class Wheel:
     release second press: run, third press: off. Repeat...
     """
 
-    if button == Wheel.config.IGNITION:
+    if button == self._wheel_config["IGNITION"]:
       self.ignition = Wheel.IgnitionButton(handler)
-    elif button == Wheel.config.PARKING_BRAKE:
+    elif button == self._wheel_config["PARKING_BRAKE"]:
       self.parking_brake = Wheel.Button(handler)
-    elif button == Wheel.config.HEADLAMP:
+    elif button == self._wheel_config["HEADLAMP"]:
       self.headlamp = Wheel.Button(handler)
-    elif button == Wheel.config.HIGH_BEAM:
+    elif button == self._wheel_config["HIGH_BEAM"]:
       self.high_beam = Wheel.Button(handler)
-    elif button == Wheel.config.WINDSHIELD_WIPER:
+    elif button == self._wheel_config["WINDSHIELD_WIPER"]:
       self.windshield_wiper = Wheel.Button(handler)
     else:
-      raise "button not configured", button
-
+      #raise "button not configured", button
+      print("button not configured", button)
   def handle_steering_wheel(self, value):
     self.steering_wheel.angle = value
 
   def handle_pedal(self ,pedal, value):
-    if pedal == Wheel.config.ACCELERATOR:
+    if pedal == self._wheel_config["ACCELERATOR"]:
       self.accelerator.state = value
-    elif pedal == Wheel.config.BRAKE:
+    elif pedal == self._wheel_config["BRAKE"]:
       self.brake.state = value
-    elif pedal == Wheel.config.CLUTCH:
+    elif pedal == self._wheel_config["CLUTCH"]:
       self.clutch.state = value
     else:
-      print "Pedal not configured", pedal
+      print("Pedal not configured", pedal)
 
   def handle_gear_shift(self, value):
     self.gear_shift.gear = Wheel.gears.get(value)
 
   def handle_button(self, button, value):
-    if button == Wheel.config.IGNITION:
+    if button == self._wheel_config["IGNITION"]:
       self.ignition.pressed = value
-    elif button == Wheel.config.PARKING_BRAKE:
+    elif button == self._wheel_config["PARKING_BRAKE"]:
       self.parking_brake.pressed = value
-    elif button == Wheel.config.HEADLAMP:
+    elif button == self._wheel_config["HEADLAMP"]:
       self.headlamp.pressed = value
-    elif button == Wheel.config.HIGH_BEAM:
+    elif button == self._wheel_config["HIGH_BEAM"]:
       self.high_beam.pressed = value
-    elif button == Wheel.config.WINDSHIELD_WIPER:
+    elif button == self._wheel_config["WINDSHIELD_WIPER"]:
       self.windshield_wiper.pressed = value
     else:
-      print "button not configured", button
+      print("button not configured", button)
 
 
   def loop(self):
@@ -272,7 +285,7 @@ class Wheel:
         if event.type == pygame.QUIT:
           keep_going = False
         if event.type == pygame.JOYAXISMOTION:
-          if event.axis == Wheel.config.STEERING_WHEEL:
+          if event.axis == self._wheel_config["STEERING_WHEEL"]:
             self.handle_steering_wheel(event.value)
           else:
             self.handle_pedal(event.axis, event.value)
@@ -283,7 +296,7 @@ class Wheel:
             self.handle_button(event.button, (event.type == pygame.JOYBUTTONDOWN))
         elif event.type == pygame.KEYDOWN:
           if event.key == pygame.K_ESCAPE:
-            print "ESC pressed => quitting"
+            print("ESC pressed => quitting")
             pygame.event.post(pygame.event.Event(pygame.QUIT))
       clock.tick(100)
 

@@ -1,2 +1,9 @@
 venv
 *.pyc
+/.vs
+/tests
+/configs.py
+/appt.py
+/appNew.py
+/pySteeringWheel.sln
+/pySteeringWheel.pyproj

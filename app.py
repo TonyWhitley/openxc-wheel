@@ -21,6 +21,8 @@ import os
 import traceback
 from wheel_config import WheelConfig
 
+wheel_cfg = None
+
 # make sure pygame doesn't try to open an output window
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
@@ -29,20 +31,6 @@ ignition_status_values = {
   1: "accessory",
   2: "start",
   3: "run"
-}
-
-pedal_names = {
-  Wheel.config.ACCELERATOR: "accelerator", 
-  Wheel.config.BRAKE: "brake",
-  Wheel.config.CLUTCH: None
-}
-
-button_names = {
-  Wheel.config.IGNITION: "ignition_status",
-  Wheel.config.PARKING_BRAKE: "parking_brake_status",
-  Wheel.config.HEADLAMP: "headlamp_status",
-  Wheel.config.HIGH_BEAM: "high_beam_status",
-  Wheel.config.WINDSHIELD_WIPER: "windshield_wiper_status"
 }
 
 def send_data(name, value, HOST='localhost'):
@@ -74,49 +62,51 @@ def cycle_ignition_status(old_status):
   return old_status + 1
 
 def on_accelerator(val):
-  send_data(pedal_names[g27.config.ACCELERATOR], val)
+  send_data("accelerator", val)
 def on_brake(val):
-  send_data(pedal_names[g27.config.BRAKE], val)
+  send_data("brake", val)
 def on_clutch(val):
-  # clutch not supported by simulator
+  send_data("clutch", val)
   pass
 def on_angle(val):
   send_data('angle', val)
 def on_ignition(val):
-  send_data(button_names[g27.config.IGNITION], str(val))
+  send_data("ignition_status", str(val))
 def on_parking_brake(val):
-  send_data(button_names[g27.config.PARKING_BRAKE], str(val).lower())
+  send_data("parking_brake_status", str(val).lower())
 def on_headlamp(val):
-  send_data(button_names[g27.config.HEADLAMP], str(val).lower())
+  send_data("headlamp_status", str(val).lower())
 def on_high_beam(val):
-  send_data(button_names[g27.config.HIGH_BEAM], str(val).lower())
+  send_data("high_beam_status", str(val).lower())
 def on_windshied_wiper(val):
-  send_data(button_names[g27.config.WINDSHIELD_WIPER], str(val).lower())
+  send_data("windshield_wiper_status", str(val).lower())
 def on_gear_shift(gear):
   send_data("gear_lever_position", gear)
 
-g27 = Wheel()
+wheel_o = Wheel()
 
-g27.register_steering_wheel(on_angle)
-g27.register_pedal(g27.config.ACCELERATOR, on_accelerator)
-g27.register_pedal(g27.config.BRAKE, on_brake)
-g27.register_pedal(g27.config.CLUTCH, on_clutch)
-g27.register_button(g27.config.IGNITION, on_ignition)
-g27.register_button(g27.config.PARKING_BRAKE, on_parking_brake)
-g27.register_button(g27.config.HEADLAMP, on_headlamp)
-g27.register_button(g27.config.HIGH_BEAM, on_high_beam)
-g27.register_button(g27.config.WINDSHIELD_WIPER, on_windshied_wiper)
-g27.register_gear_shift(on_gear_shift)
+if wheel_o.wheel_found():
+    wheel_cfg = wheel_o.get_wheel_config()
+    wheel_o.register_steering_wheel(on_angle)
+    wheel_o.register_pedal(wheel_cfg["ACCELERATOR"], on_accelerator)
+    wheel_o.register_pedal(wheel_cfg["BRAKE"], on_brake)
+    wheel_o.register_pedal(wheel_cfg["CLUTCH"], on_clutch)
+    wheel_o.register_button(wheel_cfg["IGNITION"], on_ignition)
+    wheel_o.register_button(wheel_cfg["PARKING_BRAKE"], on_parking_brake)
+    wheel_o.register_button(wheel_cfg["HEADLAMP"], on_headlamp)
+    wheel_o.register_button(wheel_cfg["HIGH_BEAM"], on_high_beam)
+    wheel_o.register_button(wheel_cfg["WINDSHIELD_WIPER"], on_windshied_wiper)
+    wheel_o.register_gear_shift(on_gear_shift)
 
-try: 
+    try: 
+        
+      if not is_simulator_running(HOST):
+        HOST = None
+      else:
+        print "Found car on", HOST 
 
-  if not is_simulator_running(HOST):
-    HOST = None
-  else:
-    print "Found car on", HOST 
-
-  g27.loop()
+      wheel_o.loop()
   
-except Exception as e:
-  print e
-  print traceback.format_exc()
+    except Exception as e:
+      print(e)
+      print(traceback.format_exc())
