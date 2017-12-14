@@ -1,6 +1,8 @@
-# openxc-wheel
+# pySteeringWheel (forked from openxc-wheel)
 
 Use to control the OpenXC vehicle simulator (http://openxcplatform.com/projects/simulator.html) from a Logitech G27 steering wheel, or alternatively a G25 (more can be added - see wheel_config.py).
+
+Can also be used simply to get inputs from a wheel / pedals / shifter.
 
 ## Requirements
 
