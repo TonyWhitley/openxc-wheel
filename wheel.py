@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import wheel_config
 import pygame
 import math

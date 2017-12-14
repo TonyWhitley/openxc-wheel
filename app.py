@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # Control openxc-vehicle-simulator from a Logitech G27 controller
 # by Juergen Schmerder (@schmerdy)
+from __future__ import print_function
 
 import sys
 from wheel import Wheel
@@ -14,7 +15,11 @@ if len(sys.argv) > 1:
 else:
   HOST = "localhost"
 
-import urllib2,urllib
+try:
+    import urllib2,urllib
+    no_urllib2 = False
+except:
+    no_urllib2 = True
 import pygame
 import math
 import os
@@ -34,27 +39,32 @@ ignition_status_values = {
 }
 
 def send_data(name, value, HOST='localhost'):
-  url = "http://" + HOST + ":50000/_set_data"
-  post_data = urllib.urlencode([('name',name),('value',value)])
-  if DEBUG: 
-    print post_data
-  try:
-    req = urllib2.urlopen(url, post_data)
-  except Exception as ex:
-    if DEBUG:
-      print ex
+  if no_urllib2:
+    print('%s: %s' % (name, value))
+  else:
+      url = "http://" + HOST + ":50000/_set_data"
+      post_data = urllib.urlencode([('name',name),('value',value)])
+      if DEBUG: 
+        print(post_data)
+      try:
+        req = urllib2.urlopen(url, post_data)
+      except Exception as ex:
+        if DEBUG:
+          print(ex)
 
 def is_simulator_running(HOST):
   url = "http://" + HOST + ":50000"
-  try:
-    req = urllib2.urlopen(url)
-  except Exception as ex:
-    print ex
-    print traceback.format_exc()
-    print "No openxc-vehicle-simulator running on", url
-    print "logging wheel input instead"
-    return False
-  return True
+  if not no_urllib2:
+      try:
+        req = urllib2.urlopen(url)
+      except Exception as ex:
+        print (ex)
+        print (traceback.format_exc())
+        print ("No openxc-vehicle-simulator running on", url)
+        print ("logging wheel input instead")
+        return False
+      return True
+  return False
  
 def cycle_ignition_status(old_status):
   if old_status == 3:
@@ -103,7 +113,7 @@ if wheel_o.wheel_found():
       if not is_simulator_running(HOST):
         HOST = None
       else:
-        print "Found car on", HOST 
+        print("Found car on", HOST)
 
       wheel_o.loop()
   
