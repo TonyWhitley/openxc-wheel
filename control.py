@@ -6,8 +6,8 @@
 import pygame
 import math
 import os
-import urllib, urllib2
-from cookielib import CookieJar
+import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
+from http.cookiejar import CookieJar
 
 # make sure pygame doesn't try to open an output window
 os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -44,12 +44,12 @@ axis_mode = 1
 def send_data(name, value):
   url = 'http://localhost:50000/_set_data'
   #print name,value
-  post_data = urllib.urlencode([('name',name),('value',value)])
-  print post_data
+  post_data = urllib.parse.urlencode([('name',name),('value',value)])
+  print(post_data)
   try:
-    req = urllib2.urlopen(url, post_data)
+    req = urllib.request.urlopen(url, post_data)
   except Exception as ex:
-    print ex
+    print(ex)
     exit(-1)
 
 def pedal_value(value):
@@ -60,21 +60,21 @@ def pedal_value(value):
 
 
 def start():
-  urllib2.urlopen("http://localhost:50000/start","")
+  urllib.request.urlopen("http://localhost:50000/start","")
   send_data("ignition_status","off")
 def stop():
   send_data("ignition_status","off")
-  urllib2.urlopen("http://localhost:50000/stop","")
+  urllib.request.urlopen("http://localhost:50000/stop","")
 
 
 pygame.init()                        
 
 try:
-  res = urllib2.urlopen("http://localhost:50000/")
-except urllib2.HTTPError, e:
-    print e.code
-except urllib2.URLError, e:
-    print e.args
+  res = urllib.request.urlopen("http://localhost:50000/")
+except urllib.error.HTTPError as e:
+    print(e.code)
+except urllib.error.URLError as e:
+    print(e.args)
 
 try: 
 
@@ -83,10 +83,10 @@ try:
     if pygame.joystick.Joystick(j).get_name() == WHEEL:
       wheel = pygame.joystick.Joystick(j)
       wheel.init()
-      print "Found", wheel.get_name()
+      print("Found", wheel.get_name())
 
   if not wheel:
-    print "No G27 steering wheel found"
+    print("No G27 steering wheel found")
     exit(-1)
 
   start()
@@ -96,7 +96,7 @@ try:
       exit(0)
     for event in pygame.event.get(pygame.JOYAXISMOTION):
       if DEBUG:
-        print "Motion on axis: ", event.axis
+        print("Motion on axis: ", event.axis)
       if event.axis == 0:
         send_data("angle", event.value * 600)
       elif event.axis == 1 and axis_mode ==1:
@@ -112,15 +112,15 @@ try:
         send_data("clutch", pedal_value(event.value))
     for event in pygame.event.get(pygame.JOYBUTTONUP):
       if DEBUG:
-        print "Released button is", event.button
+        print("Released button is", event.button)
       if (event.button >= 12 and event.button <= 17) or event.button == 22:
         gear = 0
         send_data("gear_lever_position", gear_lever_positions[gear])
     for event in pygame.event.get(pygame.JOYBUTTONDOWN):
       if DEBUG:
-        print "Pressed button is", event.button
+        print("Pressed button is", event.button)
       if event.button == 0: 
-        print "pressed button 0 - bye..."
+        print("pressed button 0 - bye...")
         stop()
         exit(0)
       elif event.button == 11:
@@ -136,4 +136,4 @@ try:
         send_data(status_buttons[event.button],str(vars()[status_buttons[event.button]]).lower())
 
 except Exception as e:
-  print e
+  print(e)

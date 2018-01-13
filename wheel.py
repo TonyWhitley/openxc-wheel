@@ -124,13 +124,13 @@ class Wheel:
       # pygame returns a value between -1 and 1 for every axis
       # openxc-vehicle-simulator expects a value between -600 and 600
       angle = value * 600
-      if angle > 600 - Wheel.config.STEERING_WHEEL_TOLERANCE:
+      if angle > 600 - Wheel.config['STEERING_WHEEL_TOLERANCE']:
         angle = 600
-      if angle < -600 + Wheel.config.STEERING_WHEEL_TOLERANCE:
+      if angle < -600 + Wheel.config['STEERING_WHEEL_TOLERANCE']:
         angle = -600
-      if math.fabs(angle) < Wheel.config.STEERING_WHEEL_TOLERANCE:
+      if math.fabs(angle) < Wheel.config['STEERING_WHEEL_TOLERANCE']:
         angle = 0
-      if self._angle is None or math.fabs(self._angle - angle) > Wheel.config.STEERING_WHEEL_TOLERANCE:
+      if self._angle is None or math.fabs(self._angle - angle) > Wheel.config['STEERING_WHEEL_TOLERANCE']:
         self._angle = angle
         self.on_change(self._angle)
 
@@ -272,8 +272,26 @@ class Wheel:
     elif button == self._wheel_config["WINDSHIELD_WIPER"]:
       self.windshield_wiper.pressed = value
     else:
+      for name, number in self._wheel_config.items():
+          if number == button:
+              print(name, value)
+              return
+      
       print("button not configured", button)
 
+  def handle_hat_motion(self, value):
+    """
+    value is a tuple (X, Y)
+    X = 1  : right
+    X = -1 : left
+    Y = 1  : up
+    Y = -1 : down
+
+    (0, 0) is centred.
+    (1, 1) is up and right etc.
+    """
+    print(value)
+    pass
 
   def loop(self):
     """process event coming from G27
@@ -296,6 +314,8 @@ class Wheel:
             self.handle_gear_shift(event.button if event.type == pygame.JOYBUTTONDOWN else 0)
           else:
             self.handle_button(event.button, (event.type == pygame.JOYBUTTONDOWN))
+        elif event.type == pygame.JOYHATMOTION:
+          self.handle_hat_motion(event.value)
         elif event.type == pygame.KEYDOWN:
           if event.key == pygame.K_ESCAPE:
             print("ESC pressed => quitting")
